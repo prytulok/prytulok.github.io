@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Допомога поруч</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <style>
+        body { margin: 0; font-family: sans-serif; background: #f4f4f9; }
+        #map { height: 100vh; width: 100%; z-index: 1; }
+        
+        .toggle-btn {
+            position: absolute; top: 10px; right: 10px; z-index: 1001;
+            width: 45px; height: 45px; background: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2); cursor: pointer;
+            font-size: 28px; font-weight: bold; color: #007bff;
+        }
+
+        .form-container {
+            position: absolute; top: 10px; right: 10px; z-index: 1000;
+            background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.3);
+            width: 280px; max-height: 90vh; overflow-y: auto; display: none;
+        }
+        
+        h3 { margin-top: 0; font-size: 1.1rem; padding-right: 25px; }
+        input, select, textarea, button { width: 100%; margin-bottom: 8px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 0.9rem; }
+        label { font-size: 0.75rem; color: #666; display: block; margin-bottom: 2px; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
+        .coords-val { background: #eee; font-family: monospace; font-size: 0.75rem; color: #555; }
+        .close-btn { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 22px; color: #999; font-weight: bold; }
+        
+        .rev-item { border-bottom: 1px solid #eee; padding: 4px 0; font-size: 0.8rem; color: #444; }
+        .cf-turnstile { margin-bottom: 8px; scale: 0.85; transform-origin: left top; }
+    </style>
+</head>
+<body>
+
+<div class="toggle-btn" id="openBtn" onclick="toggleForm(true)">+</div>
+
+<div class="form-container" id="formPanel">
+    <span class="close-btn" onclick="toggleForm(false)">×</span>
+    <h3>Додати об'єкт</h3>
+    
+    <label>Категорія</label>
+    <select id="catId">
+        <option value="1">🛏️ Нічліг</option>
+        <option value="2">🍲 Їжа</option>
+        <option value="3">💊 Ліки</option>
+        <option value="4">🚿 Гігієна / Душ</option>
+        <option value="5">👕 Одяг / Речі</option>
+    </select>
+
+    <input type="text" id="name" placeholder="Назва (напр. БФ 'Надія')">
+    <input type="text" id="address" placeholder="Адреса">
+    <input type="text" id="hours" placeholder="Години роботи (напр. 08:00-20:00)">
+    <input type="text" id="phone" placeholder="Телефон координатора">
+    <textarea id="comment" placeholder="Коментар" rows="2"></textarea>
+    
+    <label>Координати (клацніть на мапі!)</label>
+    <input type="text" id="coords" class="coords-val" placeholder="Очікування кліку..." readonly>
+
+    <div class="cf-turnstile" data-sitekey="ТВІЙ_TURNSTILE_SITE_KEY"></div>
+
+    <button id="submitBtn" onclick="sendData()">Надіслати на модерацію</button>
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const API_URL = 'https://shelter-api.basyliydelcreatore-01.workers.dev';
+    const SITE_KEY = 'ТВІЙ_TURNSTILE_SITE_KEY';
+    const map = L.map('map').setView([48.3794, 31.1656], 6);
+    let selectedMarker = null;
+    window.currentReviewToken = null;
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    function toggleForm(show) {
+        document.getElementById('formPanel').style.display = show ? 'block' : 'none';
+        document.getElementById('openBtn').style.display = show ? 'none' : 'flex';
+    }
+
+    async function loadLocations() {
+        try {
+            const res = await fetch(`${API_URL}/api/locations`);
+            const data = await res.json();
+            data.forEach(loc => {
+                const marker = L.marker([loc.lat, loc.lng]).addTo(map);
+                
+                marker.on('popupopen', async () => {
+                    const container = document.getElementById(`rev-list-${loc.id}`);
+                    container.innerHTML = "Завантаження...";
+                    
+                    const rRes = await fetch(`${API_URL}/api/reviews?locId=${loc.id}`);
+                    const reviews = await rRes.json();
+                    container.innerHTML = reviews.length ? reviews.map(r => `<div class="rev-item">• ${r.text}</div>`).join('') : 'Відгуків немає';
+                    
+                    turnstile.render(`#ts-review-${loc.id}`, {
+                        sitekey: SITE_KEY,
+                        callback: function(token) { window.currentReviewToken = token; }
+                    });
+                });
+
+                marker.bindPopup(`
+                    <div style="width:220px">
+                        <b>${loc.name}</b><br><small>📍 ${loc.address}</small><br>
+                        <small>⏰ ${loc.working_hours || '-'}</small><br>
+                        <small>💬 ${loc.comment || ''}</small>
+                        <hr>
+                        <div id="rev-list-${loc.id}" style="max-height:80px; overflow-y:auto; margin-bottom:8px;"></div>
+                        <textarea id="rev-input-${loc.id}" placeholder="Ваш відгук..." style="width:100%; font-size:0.8rem;"></textarea>
+                        <div id="ts-review-${loc.id}"></div>
+                        <button onclick="sendReview(${loc.id})" style="width:100%; padding:5px; background:#333; color:white; border:none; border-radius:4px; cursor:pointer;">Залишити відгук</button>
+                    </div>
+                `);
+            });
+        } catch (e) { console.error("Помилка завантаження"); }
+    }
+
+    map.on('click', e => {
+        if (document.getElementById('formPanel').style.display !== 'block') return;
+        const { lat, lng } = e.latlng;
+        if (selectedMarker) map.removeLayer(selectedMarker);
+        selectedMarker = L.marker([lat, lng]).addTo(map);
+        document.getElementById('coords').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        window.pos = { lat, lng };
+    });
+
+    async function sendData() {
+        const token = turnstile.getResponse();
+        if (!window.pos || !token) return alert("Оберіть точку та пройдіть перевірку!");
+
+        const res = await fetch(`${API_URL}/api/suggest`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                token,
+                formData: {
+                    catId: document.getElementById('catId').value,
+                    name: document.getElementById('name').value,
+                    address: document.getElementById('address').value,
+                    hours: document.getElementById('hours').value,
+                    phone: document.getElementById('phone').value,
+                    comment: document.getElementById('comment').value,
+                    lat: window.pos.lat,
+                    lng: window.pos.lng
+                }
+            })
+        });
+        if (res.ok) { alert("Надіслано на модерацію!"); location.reload(); }
+    }
+
+    async function sendReview(locId) {
+        const text = document.getElementById(`rev-input-${locId}`).value;
+        const token = window.currentReviewToken;
+        if (!text || !token) return alert("Напишіть текст та пройдіть перевірку!");
+
+        const res = await fetch(`${API_URL}/api/review`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ locId, text, token })
+        });
+        if (res.ok) { alert("Відгук надіслано!"); map.closePopup(); }
+    }
+
+    loadLocations();
+</script>
+</body>
+</html>
