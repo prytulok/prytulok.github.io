@@ -61,7 +61,7 @@
     <label>Координати (клацніть на мапі!)</label>
     <input type="text" id="coords" class="coords-val" placeholder="Очікування кліку..." readonly>
 
-    <div class="cf-turnstile" data-sitekey="ТВІЙ_TURNSTILE_SITE_KEY"></div>
+    <div class="cf-turnstile" data-sitekey="0x4AAAAAAENAIXj5DrpBRyQV"></div>
 
     <button id="submitBtn" onclick="sendData()">Надіслати на модерацію</button>
 </div>
@@ -71,7 +71,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     const API_URL = 'https://shelter-api.basyliydelcreatore-01.workers.dev';
-    const SITE_KEY = 'ТВІЙ_TURNSTILE_SITE_KEY';
+    const SITE_KEY = '0x4AAAAAAENAIXj5DrpBRyQV';
     const map = L.map('map').setView([48.3794, 31.1656], 6);
     let selectedMarker = null;
     window.currentReviewToken = null;
