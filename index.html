@@ -19,6 +19,8 @@
         .close-btn { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 22px; color: #999; font-weight: bold; }
         .rev-item { border-bottom: 1px solid #eee; padding: 4px 0; font-size: 0.8rem; color: #444; }
         .cf-turnstile { margin-bottom: 8px; min-height: 65px; }
+        /* Стиль для круглих іконок */
+        .cat-icon { background: white; border: 2px solid #007bff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); font-size: 18px; }
     </style>
 </head>
 <body>
@@ -37,14 +39,13 @@
         <option value="5">👕 Одяг / Речі</option>
     </select>
 
-    <input type="text" id="name" placeholder="Назва">
+    <input type="text" id="name" placeholder="Назва (напр. БФ 'Надія')">
     <input type="text" id="address" placeholder="Адреса">
-    <input type="text" id="hours" placeholder="Години роботи">
-    <input type="text" id="phone" placeholder="Телефон">
+    <input type="text" id="hours" placeholder="Години роботи (напр. 08:00-20:00)">
+    <input type="text" id="phone" placeholder="Телефон координатора">
     <textarea id="comment" placeholder="Коментар" rows="2"></textarea>
     <input type="text" id="coords" class="coords-val" placeholder="Клікніть на мапу..." readonly>
 
-    <!-- Додано ID для стабільного отримання токена -->
     <div id="main-ts" class="cf-turnstile" data-sitekey="0x4AAAAAAENAIXj5DrpBRyQV"></div>
 
     <button id="submitBtn" onclick="sendData()">Надіслати на модерацію</button>
@@ -60,6 +61,9 @@
     let selectedMarker = null;
     window.currentReviewToken = null;
 
+    // Словник іконок за категоріями
+    const catIcons = { 1: '🏠', 2: '🍲', 3: '💊', 4: '🚿', 5: '👕' };
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
     function toggleForm(show) {
@@ -73,7 +77,15 @@
             const res = await fetch(`${API_URL}/api/locations`);
             const data = await res.json();
             data.forEach(loc => {
-                const marker = L.marker([loc.lat, loc.lng]).addTo(map);
+                // Створення кастомної іконки
+                const icon = L.divIcon({
+                    html: catIcons[loc.category_id] || '📍',
+                    className: 'cat-icon',
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
+                });
+
+                const marker = L.marker([loc.lat, loc.lng], { icon }).addTo(map);
                 
                 marker.on('popupopen', async () => {
                     const container = document.getElementById(`rev-list-${loc.id}`);
@@ -83,7 +95,6 @@
                     const reviews = await rRes.json();
                     container.innerHTML = reviews.length ? reviews.map(r => `<div class="rev-item">• ${r.text}</div>`).join('') : 'Відгуків немає';
                     
-                    // Очищуємо і рендеримо заново для уникнення помилок postMessage
                     const tsDiv = document.getElementById(`ts-review-${loc.id}`);
                     tsDiv.innerHTML = '';
                     turnstile.render(tsDiv, {
