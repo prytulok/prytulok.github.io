@@ -2,56 +2,64 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Панель модератора</title>
+    <title>Повна база модерації</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 30px; background: #f4f7f6; color: #333; }
-        h2 { border-left: 5px solid #007bff; padding-left: 15px; margin-bottom: 20px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #f8f9fa; }
+        h2 { color: #2c3e50; border-bottom: 3px solid #007bff; padding-bottom: 10px; }
         
-        .table-container { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden; margin-bottom: 40px; }
+        .container { overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 40px; }
         
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #007bff; color: white; text-transform: uppercase; font-size: 0.85rem; }
-        tr:hover { background: #f9f9f9; }
+        table { width: 100%; border-collapse: collapse; min-width: 1200px; }
+        th, td { padding: 10px; border: 1px solid #dee2e6; text-align: left; font-size: 0.85rem; }
+        th { background: #e9ecef; color: #495057; font-weight: bold; white-space: nowrap; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        tr:hover { background-color: #e2e6ea; }
         
-        .empty-msg { padding: 20px; text-align: center; color: #888; }
-        .coords { font-family: monospace; color: #666; font-size: 0.8rem; }
-        .contact-info { font-size: 0.9rem; }
-        .comment-text { font-style: italic; color: #555; font-size: 0.85rem; max-width: 250px; }
+        .id-cell { font-weight: bold; color: #007bff; }
+        .date-cell { color: #6c757d; font-size: 0.75rem; }
+        .status-badge { background: #ffc107; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h2>📍 Локації на модерацію</h2>
-    <div class="table-container">
+    <h2>📍 Таблиця: LOCATIONS (is_verified = 0)</h2>
+    <div class="container">
         <table>
             <thead>
                 <tr>
-                    <th>Назва</th>
-                    <th>Адреса</th>
-                    <th>Контакти</th>
-                    <th>Коментар</th>
-                    <th>Координати</th>
+                    <th>ID</th>
+                    <th>Cat_ID</th>
+                    <th>Name</th>
+                    <th>Address</th>
+                    <th>Lat</th>
+                    <th>Lng</th>
+                    <th>Working Hours</th>
+                    <th>Phone</th>
+                    <th>Comment</th>
+                    <th>Verified</th>
+                    <th>Created At</th>
                 </tr>
             </thead>
             <tbody id="locBody">
-                <tr><td colspan="5" class="empty-msg">Завантаження даних...</td></tr>
+                <tr><td colspan="11" style="text-align:center;">Завантаження локацій...</td></tr>
             </tbody>
         </table>
     </div>
 
-    <h2>💬 Відгуки на модерацію</h2>
-    <div class="table-container">
+    <h2>💬 Таблиця: REVIEWS (is_verified = 0)</h2>
+    <div class="container">
         <table>
             <thead>
                 <tr>
-                    <th>ID Локації</th>
-                    <th>Текст відгуку</th>
-                    <th>Дата створення</th>
+                    <th>ID</th>
+                    <th>Loc_ID</th>
+                    <th>Text</th>
+                    <th>Verified</th>
+                    <th>Created At</th>
                 </tr>
             </thead>
             <tbody id="revBody">
-                <tr><td colspan="3" class="empty-msg">Завантаження відгуків...</td></tr>
+                <tr><td colspan="5" style="text-align:center;">Завантаження відгуків...</td></tr>
             </tbody>
         </table>
     </div>
@@ -59,52 +67,48 @@
 <script>
     const API_URL = 'https://shelter-api.basyliydelcreatore-01.workers.dev';
 
-    async function loadAdminData() {
+    async function fetchData() {
         try {
             const res = await fetch(`${API_URL}/api/admin/pending`);
-            if (!res.ok) throw new Error("Помилка сервера");
             const data = await res.json();
 
-            // 1. Рендеримо локації
+            // Рендер LOCATIONS
             const locBody = document.getElementById('locBody');
-            if (data.locations && data.locations.length > 0) {
-                locBody.innerHTML = data.locations.map(loc => `
-                    <tr>
-                        <td><strong>${loc.name || 'Без назви'}</strong></td>
-                        <td>${loc.address || '-'}</td>
-                        <td class="contact-info">
-                            ${loc.phone ? `📞 ${loc.phone}<br>` : ''}
-                            ${loc.working_hours ? `🕒 ${loc.working_hours}` : '-'}
-                        </td>
-                        <td class="comment-text">${loc.comment || ''}</td>
-                        <td class="coords">${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}</td>
-                    </tr>
-                `).join('');
-            } else {
-                locBody.innerHTML = '<tr><td colspan="5" class="empty-msg">Нових локацій немає</td></tr>';
-            }
+            locBody.innerHTML = data.locations.length ? data.locations.map(l => `
+                <tr>
+                    <td class="id-cell">${l.id}</td>
+                    <td>${l.category_id}</td>
+                    <td><strong>${l.name || ''}</strong></td>
+                    <td>${l.address || ''}</td>
+                    <td>${l.lat}</td>
+                    <td>${l.lng}</td>
+                    <td>${l.working_hours || ''}</td>
+                    <td>${l.phone || ''}</td>
+                    <td>${l.comment || ''}</td>
+                    <td><span class="status-badge">${l.is_verified}</span></td>
+                    <td class="date-cell">${l.created_at || '-'}</td>
+                </tr>
+            `).join('') : '<tr><td colspan="11" style="text-align:center;">Немає даних</td></tr>';
 
-            // 2. Рендеримо відгуки
+            // Рендер REVIEWS
             const revBody = document.getElementById('revBody');
-            if (data.reviews && data.reviews.length > 0) {
-                revBody.innerHTML = data.reviews.map(rev => `
-                    <tr>
-                        <td><strong>#${rev.location_id}</strong></td>
-                        <td>${rev.text}</td>
-                        <td><small>${rev.created_at || 'Не вказано'}</small></td>
-                    </tr>
-                `).join('');
-            } else {
-                revBody.innerHTML = '<tr><td colspan="3" class="empty-msg">Нових відгуків немає</td></tr>';
-            }
+            revBody.innerHTML = data.reviews.length ? data.reviews.map(r => `
+                <tr>
+                    <td class="id-cell">${r.id}</td>
+                    <td>${r.location_id}</td>
+                    <td>${r.text}</td>
+                    <td><span class="status-badge">${r.is_verified}</span></td>
+                    <td class="date-cell">${r.created_at || '-'}</td>
+                </tr>
+            `).join('') : '<tr><td colspan="5" style="text-align:center;">Немає даних</td></tr>';
 
         } catch (e) {
             console.error(e);
-            document.getElementById('locBody').innerHTML = '<tr><td colspan="5" class="empty-msg" style="color:red;">Помилка з\'єднання з API</td></tr>';
+            alert("Помилка при отриманні даних з бази.");
         }
     }
 
-    loadAdminData();
+    fetchData();
 </script>
 </body>
 </html>
