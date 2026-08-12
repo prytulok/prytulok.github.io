@@ -4,43 +4,57 @@
     <meta charset="UTF-8">
     <title>Панель модератора</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
-        h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; background: white; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
-        th { background: #f8f9fa; }
-        tr:hover { background: #f1f1f1; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; background: #ffc107; }
-        .btn-approve { background: #28a745; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+        body { font-family: 'Segoe UI', sans-serif; padding: 30px; background: #f4f7f6; color: #333; }
+        h2 { border-left: 5px solid #007bff; padding-left: 15px; margin-bottom: 20px; }
+        
+        .table-container { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden; margin-bottom: 40px; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #007bff; color: white; text-transform: uppercase; font-size: 0.85rem; }
+        tr:hover { background: #f9f9f9; }
+        
+        .empty-msg { padding: 20px; text-align: center; color: #888; }
+        .coords { font-family: monospace; color: #666; font-size: 0.8rem; }
+        .contact-info { font-size: 0.9rem; }
+        .comment-text { font-style: italic; color: #555; font-size: 0.85rem; max-width: 250px; }
     </style>
 </head>
 <body>
 
-    <h2>📍 Локації на модерацію (is_verified = 0)</h2>
-    <table id="locTable">
-        <thead>
-            <tr>
-                <th>Назва</th>
-                <th>Адреса</th>
-                <th>Контакти</th>
-                <th>Коментар</th>
-                <th>Координати</th>
-            </tr>
-        </thead>
-        <tbody id="locBody"><tr><td colspan="5">Завантаження...</td></tr></tbody>
-    </table>
+    <h2>📍 Локації на модерацію</h2>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Назва</th>
+                    <th>Адреса</th>
+                    <th>Контакти</th>
+                    <th>Коментар</th>
+                    <th>Координати</th>
+                </tr>
+            </thead>
+            <tbody id="locBody">
+                <tr><td colspan="5" class="empty-msg">Завантаження даних...</td></tr>
+            </tbody>
+        </table>
+    </div>
 
-    <h2>💬 Відгуки на модерацію (is_verified = 0)</h2>
-    <table id="revTable">
-        <thead>
-            <tr>
-                <th>ID Локації</th>
-                <th>Текст відгуку</th>
-                <th>Дата</th>
-            </tr>
-        </thead>
-        <tbody id="revBody"><tr><td colspan="3">Завантаження...</td></tr></tbody>
-    </table>
+    <h2>💬 Відгуки на модерацію</h2>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID Локації</th>
+                    <th>Текст відгуку</th>
+                    <th>Дата створення</th>
+                </tr>
+            </thead>
+            <tbody id="revBody">
+                <tr><td colspan="3" class="empty-msg">Завантаження відгуків...</td></tr>
+            </tbody>
+        </table>
+    </div>
 
 <script>
     const API_URL = 'https://shelter-api.basyliydelcreatore-01.workers.dev';
@@ -48,32 +62,45 @@
     async function loadAdminData() {
         try {
             const res = await fetch(`${API_URL}/api/admin/pending`);
+            if (!res.ok) throw new Error("Помилка сервера");
             const data = await res.json();
 
-            // Рендерим локації
+            // 1. Рендеримо локації
             const locBody = document.getElementById('locBody');
-            locBody.innerHTML = data.locations.length ? data.locations.map(loc => `
-                <tr>
-                    <b>${loc.name}</b></td>
-                    <td>${loc.address}</td>
-                    <td>${loc.phone || '-'}<br><small>${loc.working_hours || '-'}</small></td>
-                    <td><i>${loc.comment || ''}</i></td>
-                    <td><small>${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}</small></td>
-                </tr>
-            `).join('') : '<tr><td colspan="5">Немає нових локацій</td></tr>';
+            if (data.locations && data.locations.length > 0) {
+                locBody.innerHTML = data.locations.map(loc => `
+                    <tr>
+                        <td><strong>${loc.name || 'Без назви'}</strong></td>
+                        <td>${loc.address || '-'}</td>
+                        <td class="contact-info">
+                            ${loc.phone ? `📞 ${loc.phone}<br>` : ''}
+                            ${loc.working_hours ? `🕒 ${loc.working_hours}` : '-'}
+                        </td>
+                        <td class="comment-text">${loc.comment || ''}</td>
+                        <td class="coords">${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}</td>
+                    </tr>
+                `).join('');
+            } else {
+                locBody.innerHTML = '<tr><td colspan="5" class="empty-msg">Нових локацій немає</td></tr>';
+            }
 
-            // Рендерим відгуки
+            // 2. Рендеримо відгуки
             const revBody = document.getElementById('revBody');
-            revBody.innerHTML = data.reviews.length ? data.reviews.map(rev => `
-                <tr>
-                    <td>#${rev.location_id}</td>
-                    <td>${rev.text}</td>
-                    <td><small>${rev.created_at || ''}</small></td>
-                </tr>
-            `).join('') : '<tr><td colspan="3">Немає нових відгуків</td></tr>';
+            if (data.reviews && data.reviews.length > 0) {
+                revBody.innerHTML = data.reviews.map(rev => `
+                    <tr>
+                        <td><strong>#${rev.location_id}</strong></td>
+                        <td>${rev.text}</td>
+                        <td><small>${rev.created_at || 'Не вказано'}</small></td>
+                    </tr>
+                `).join('');
+            } else {
+                revBody.innerHTML = '<tr><td colspan="3" class="empty-msg">Нових відгуків немає</td></tr>';
+            }
 
         } catch (e) {
-            alert("Помилка завантаження даних");
+            console.error(e);
+            document.getElementById('locBody').innerHTML = '<tr><td colspan="5" class="empty-msg" style="color:red;">Помилка з\'єднання з API</td></tr>';
         }
     }
 
