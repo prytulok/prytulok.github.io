@@ -13,13 +13,12 @@
         .form-container { position: absolute; top: 10px; right: 10px; z-index: 1000; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.3); width: 280px; max-height: 90vh; overflow-y: auto; display: none; }
         h3 { margin-top: 0; font-size: 1.1rem; padding-right: 25px; }
         input, select, textarea, button { width: 100%; margin-bottom: 8px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 0.9rem; }
-        label { font-size: 0.75rem; color: #666; display: block; margin-bottom: 2px; }
-        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
         .coords-val { background: #eee; font-family: monospace; font-size: 0.75rem; color: #555; }
         .close-btn { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 22px; color: #999; font-weight: bold; }
         .rev-item { border-bottom: 1px solid #eee; padding: 4px 0; font-size: 0.8rem; color: #444; }
         .cf-turnstile { margin-bottom: 8px; min-height: 65px; }
-        /* Стиль для круглих іконок */
         .cat-icon { background: white; border: 2px solid #007bff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); font-size: 18px; }
     </style>
 </head>
@@ -39,10 +38,10 @@
         <option value="5">👕 Одяг / Речі</option>
     </select>
 
-    <input type="text" id="name" placeholder="Назва (напр. БФ 'Надія')">
+    <input type="text" id="name" placeholder="Назва">
     <input type="text" id="address" placeholder="Адреса">
-    <input type="text" id="hours" placeholder="Години роботи (напр. 08:00-20:00)">
-    <input type="text" id="phone" placeholder="Телефон координатора">
+    <input type="text" id="hours" placeholder="Години роботи">
+    <input type="text" id="phone" placeholder="Телефон">
     <textarea id="comment" placeholder="Коментар" rows="2"></textarea>
     <input type="text" id="coords" class="coords-val" placeholder="Клікніть на мапу..." readonly>
 
@@ -61,7 +60,6 @@
     let selectedMarker = null;
     window.currentReviewToken = null;
 
-    // Словник іконок за категоріями
     const catIcons = { 1: '🏠', 2: '🍲', 3: '💊', 4: '🚿', 5: '👕' };
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
@@ -75,9 +73,10 @@
     async function loadLocations() {
         try {
             const res = await fetch(`${API_URL}/api/locations`);
+            if (!res.ok) throw new Error("Помилка завантаження локацій");
             const data = await res.json();
+            
             data.forEach(loc => {
-                // Створення кастомної іконки
                 const icon = L.divIcon({
                     html: catIcons[loc.category_id] || '📍',
                     className: 'cat-icon',
@@ -89,13 +88,20 @@
                 
                 marker.on('popupopen', async () => {
                     const container = document.getElementById(`rev-list-${loc.id}`);
+                    const tsDiv = document.getElementById(`ts-review-${loc.id}`);
+                    
                     container.innerHTML = "Завантаження...";
                     
-                    const rRes = await fetch(`${API_URL}/api/reviews?locId=${loc.id}`);
-                    const reviews = await rRes.json();
-                    container.innerHTML = reviews.length ? reviews.map(r => `<div class="rev-item">• ${r.text}</div>`).join('') : 'Відгуків немає';
+                    try {
+                        const rRes = await fetch(`${API_URL}/api/reviews?locId=${loc.id}`);
+                        if (!rRes.ok) throw new Error();
+                        const reviews = await rRes.json();
+                        container.innerHTML = reviews.length ? reviews.map(r => `<div class="rev-item">• ${r.text}</div>`).join('') : 'Відгуків немає';
+                    } catch (e) {
+                        container.innerHTML = "Не вдалося завантажити відгуки";
+                    }
                     
-                    const tsDiv = document.getElementById(`ts-review-${loc.id}`);
+                    // Важливо: Рендеримо Turnstile ТІЛЬКИ після появи елемента в DOM попапа
                     tsDiv.innerHTML = '';
                     turnstile.render(tsDiv, {
                         sitekey: SITE_KEY,
@@ -107,13 +113,13 @@
                     <div style="width:220px">
                         <b>${loc.name}</b><br><small>📍 ${loc.address}</small><hr>
                         <div id="rev-list-${loc.id}" style="max-height:80px; overflow-y:auto; margin-bottom:8px;"></div>
-                        <textarea id="rev-input-${loc.id}" placeholder="Ваш відгук..." style="width:100%; font-size:0.8rem;"></textarea>
+                        <textarea id="rev-input-${loc.id}" placeholder="Ваш відгук..." style="width:100%; font-size:0.8rem; margin-bottom:5px;"></textarea>
                         <div id="ts-review-${loc.id}" style="min-height:65px"></div>
-                        <button onclick="sendReview(${loc.id})" style="width:100%; padding:5px; background:#333; color:white; border:none; border-radius:4px; cursor:pointer;">Залишити відгук</button>
+                        <button onclick="sendReview(${loc.id})" style="width:100%; padding:8px; background:#333; color:white; border:none; border-radius:4px; cursor:pointer;">Надіслати відгук</button>
                     </div>
                 `);
             });
-        } catch (e) { console.error("Помилка завантаження"); }
+        } catch (e) { console.error(e.message); }
     }
 
     map.on('click', e => {
@@ -129,25 +135,41 @@
         const token = turnstile.getResponse('#main-ts');
         if (!window.pos || !token) return alert("Оберіть точку та пройдіть перевірку!");
 
-        const res = await fetch(`${API_URL}/api/suggest`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                token,
-                formData: {
-                    catId: document.getElementById('catId').value,
-                    name: document.getElementById('name').value,
-                    address: document.getElementById('address').value,
-                    hours: document.getElementById('hours').value,
-                    phone: document.getElementById('phone').value,
-                    comment: document.getElementById('comment').value,
-                    lat: window.pos.lat,
-                    lng: window.pos.lng
-                }
-            })
-        });
-        if (res.ok) { alert("Надіслано!"); location.reload(); }
-        else { alert("Помилка 403. Перевірте Secret Key у Worker."); turnstile.reset('#main-ts'); }
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_URL}/api/suggest`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    token,
+                    formData: {
+                        catId: document.getElementById('catId').value,
+                        name: document.getElementById('name').value,
+                        address: document.getElementById('address').value,
+                        hours: document.getElementById('hours').value,
+                        phone: document.getElementById('phone').value,
+                        comment: document.getElementById('comment').value,
+                        lat: window.pos.lat,
+                        lng: window.pos.lng
+                    }
+                })
+            });
+
+            if (res.ok) {
+                alert("Дякуємо! Об'єкт надіслано на модерацію.");
+                location.reload();
+            } else {
+                const err = await res.json();
+                alert("Помилка: " + (err.error || "Не вдалося надіслати"));
+                turnstile.reset('#main-ts');
+            }
+        } catch (e) {
+            alert("Помилка мережі");
+        } finally {
+            btn.disabled = false;
+        }
     }
 
     async function sendReview(locId) {
@@ -155,12 +177,22 @@
         const token = window.currentReviewToken;
         if (!text || !token) return alert("Напишіть текст та пройдіть капчу!");
 
-        const res = await fetch(`${API_URL}/api/review`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ locId, text, token })
-        });
-        if (res.ok) { alert("Відгук надіслано!"); map.closePopup(); }
+        try {
+            const res = await fetch(`${API_URL}/api/review`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ locId, text, token })
+            });
+
+            if (res.ok) {
+                alert("Відгук надіслано на модерацію!");
+                map.closePopup();
+            } else {
+                alert("Помилка при надсиланні відгуку");
+            }
+        } catch (e) {
+            alert("Помилка мережі");
+        }
     }
 
     loadLocations();
