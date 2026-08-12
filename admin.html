@@ -2,129 +2,82 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Адмін-панель Модерації</title>
+    <title>Панель модератора</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #f4f7f6; color: #333; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        
-        table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #007bff; color: white; text-transform: uppercase; font-size: 0.85rem; }
-        tr:hover { background-color: #f9f9f9; }
-
-        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
-        .verified { background: #d4edda; color: #155724; }
-        .pending { background: #fff3cd; color: #856404; }
-
-        .actions { display: flex; gap: 10px; }
-        button { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-approve { background: #28a745; color: white; }
-        .btn-approve:hover { background: #218838; }
-        .btn-hide { background: #6c757d; color: white; }
-        .btn-hide:hover { background: #5a6268; }
-        
-        .loading { text-align: center; padding: 20px; font-style: italic; color: #666; }
+        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
+        h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background: #f8f9fa; }
+        tr:hover { background: #f1f1f1; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; background: #ffc107; }
+        .btn-approve { background: #28a745; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <h1>Модерація локацій</h1>
-        <button onclick="fetchAll()" style="background: #eee;">🔄 Оновити</button>
-    </header>
-
-    <table id="adminTable">
+    <h2>📍 Локації на модерацію (is_verified = 0)</h2>
+    <table id="locTable">
         <thead>
             <tr>
-                <th>Категорія</th>
                 <th>Назва</th>
-                <th>Адреса / Коментар</th>
-                <th>Статус</th>
-                <th>Дії</th>
+                <th>Адреса</th>
+                <th>Контакти</th>
+                <th>Коментар</th>
+                <th>Координати</th>
             </tr>
         </thead>
-        <tbody id="tableBody">
-            <tr><td colspan="5" class="loading">Завантаження даних...</td></tr>
-        </tbody>
+        <tbody id="locBody"><tr><td colspan="5">Завантаження...</td></tr></tbody>
     </table>
-</div>
+
+    <h2>💬 Відгуки на модерацію (is_verified = 0)</h2>
+    <table id="revTable">
+        <thead>
+            <tr>
+                <th>ID Локації</th>
+                <th>Текст відгуку</th>
+                <th>Дата</th>
+            </tr>
+        </thead>
+        <tbody id="revBody"><tr><td colspan="3">Завантаження...</td></tr></tbody>
+    </table>
 
 <script>
-    // Вкажіть URL вашого Worker
     const API_URL = 'https://shelter-api.basyliydelcreatore-01.workers.dev';
-    
-    // Словник емодзі для категорій
-    const catIcons = { 1: '🏠', 2: '🍲', 3: '💊', 4: '🚿', 5: '👕' };
 
-    async function fetchAll() {
+    async function loadAdminData() {
         try {
-            const res = await fetch(`${API_URL}/api/admin/locations`);
-            if (res.status === 401) {
-                alert("Помилка доступу. Cloudflare Zero Trust не авторизував запит.");
-                return;
-            }
+            const res = await fetch(`${API_URL}/api/admin/pending`);
             const data = await res.json();
-            renderTable(data);
+
+            // Рендерим локації
+            const locBody = document.getElementById('locBody');
+            locBody.innerHTML = data.locations.length ? data.locations.map(loc => `
+                <tr>
+                    <b>${loc.name}</b></td>
+                    <td>${loc.address}</td>
+                    <td>${loc.phone || '-'}<br><small>${loc.working_hours || '-'}</small></td>
+                    <td><i>${loc.comment || ''}</i></td>
+                    <td><small>${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}</small></td>
+                </tr>
+            `).join('') : '<tr><td colspan="5">Немає нових локацій</td></tr>';
+
+            // Рендерим відгуки
+            const revBody = document.getElementById('revBody');
+            revBody.innerHTML = data.reviews.length ? data.reviews.map(rev => `
+                <tr>
+                    <td>#${rev.location_id}</td>
+                    <td>${rev.text}</td>
+                    <td><small>${rev.created_at || ''}</small></td>
+                </tr>
+            `).join('') : '<tr><td colspan="3">Немає нових відгуків</td></tr>';
+
         } catch (e) {
-            console.error(e);
-            document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" style="color:red">Помилка завантаження. Перевірте консоль.</td></tr>';
+            alert("Помилка завантаження даних");
         }
     }
 
-    function renderTable(locations) {
-        const body = document.getElementById('tableBody');
-        if (locations.length === 0) {
-            body.innerHTML = '<tr><td colspan="5" style="text-align:center">Локацій поки немає</td></tr>';
-            return;
-        }
-
-        body.innerHTML = locations.map(loc => `
-            <tr>
-                <td>${catIcons[loc.category_id] || '📍'}</td>
-                <td><strong>${loc.name}</strong></td>
-                <td>
-                    <small>${loc.address}</small><br>
-                    <i style="font-size: 0.8rem; color: #777;">${loc.comment || ''}</i>
-                </td>
-                <td>
-                    <span class="badge ${loc.is_verified ? 'verified' : 'pending'}">
-                        ${loc.is_verified ? 'ВИДИМА' : 'НА МОДЕРАЦІЇ'}
-                    </span>
-                </td>
-                <td class="actions">
-                    ${loc.is_verified 
-                        ? `<button class="btn-hide" onclick="setStatus(${loc.id}, 0)">Приховати</button>`
-                        : `<button class="btn-approve" onclick="setStatus(${loc.id}, 1)">Опублікувати</button>`
-                    }
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    async function setStatus(id, status) {
-        try {
-            const res = await fetch(`${API_URL}/api/admin/verify`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, status })
-            });
-            
-            if (res.ok) {
-                fetchAll(); // Оновлюємо таблицю після зміни
-            } else {
-                alert("Не вдалося оновити статус.");
-            }
-        } catch (e) {
-            alert("Помилка мережі.");
-        }
-    }
-
-    // Завантажуємо дані при відкритті сторінки
-    fetchAll();
+    loadAdminData();
 </script>
-
 </body>
 </html>
