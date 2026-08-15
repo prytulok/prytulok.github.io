@@ -28,9 +28,43 @@
     <style>
         body { margin: 0; font-family: sans-serif; background: #f4f4f9; }
         #map { height: 100vh; width: 100%; z-index: 1; }
-        .toggle-btn { position: absolute; top: 10px; right: 10px; z-index: 1001; width: 45px; height: 45px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(0,0,0,0.2); cursor: pointer; font-size: 28px; font-weight: bold; color: #007bff; }
+        .toggle-btn {
+			position: absolute;
+			top: 20px;
+			right: 20px;
+			z-index: 1001;
+			width: auto;
+			padding: 0 20px;
+			height: 50px;
+			background: #28a745; /* Зелений колір асоціюється з дією та допомогою */
+			color: white;
+			border-radius: 25px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+			cursor: pointer;
+			font-size: 16px;
+			font-weight: bold;
+			transition: transform 0.2s, background 0.2s;
+		}
+		.toggle-btn:hover {
+			background: #218838;
+			transform: scale(1.05);
+		}
+
+		@keyframes pulse {
+			0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+			70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+			100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+		}
+
+		.toggle-btn {
+			animation: pulse 2s infinite;
+		}
         .form-container { position: absolute; top: 10px; right: 10px; z-index: 1000; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.3); width: 280px; max-height: 90vh; overflow-y: auto; display: none; }
-        h3 { margin-top: 0; font-size: 1.1rem; padding-right: 25px; }
+        h3 { margin-top: 0; margin-bottom: 0; font-size: 1.1rem; padding-right: 25px; }
+		h5 { line-height: 1; margin-top: 10px; }
         input, select, textarea, button { width: 100%; margin-bottom: 8px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 0.9rem; }
         label { font-size: 0.75rem; color: #666; display: block; margin-bottom: 2px; }
         button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
@@ -41,6 +75,87 @@
         .cf-turnstile { margin-bottom: 8px; min-height: 65px; }
         .cat-icon { background: white; border: 2px solid #007bff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); font-size: 18px; }
 		.seo-content { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }
+		.welcome-overlay {
+		    display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0, 0, 0, 0.7);
+			align-items: center;
+			justify-content: center;
+			z-index: 2000;
+			backdrop-filter: blur(4px);
+		}
+
+		.welcome-content {
+			background: white;
+			padding: 30px;
+			border-radius: 15px;
+			max-width: 400px;
+			text-align: center;
+			box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+			margin: 20px;
+		}
+
+		.welcome-content h2 {
+			color: #007bff;
+			margin-top: 0;
+		}
+
+		.welcome-content p {
+			font-size: 1.1rem;
+			line-height: 1.5;
+			color: #333;
+		}
+
+		.welcome-btn {
+			background: #28a745;
+			color: white;
+			border: none;
+			padding: 12px 25px;
+			border-radius: 25px;
+			font-size: 1rem;
+			font-weight: bold;
+			cursor: pointer;
+			margin-top: 15px;
+			transition: background 0.3s;
+		}
+		.welcome-btn:hover {
+			background: #218838;
+		}
+		.share-btn {
+			position: absolute;
+			bottom: 20px;
+			right: 20px;
+			z-index: 3;
+			width: auto;
+			padding: 0 15px;
+			height: 40px;
+			background: white;
+			color: #333;
+			border-radius: 20px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+			cursor: pointer;
+			font-size: 14px;
+			font-weight: 500;
+			transition: all 0.2s;
+			border: 1px solid #ddd;
+		}
+
+		.share-btn:hover {
+			background: #f8f9fa;
+			transform: translateY(-2px);
+		}
+
+		.share-icon {
+			margin-right: 8px;
+			font-size: 16px;
+		}
     </style>
 </head>
 <body>
@@ -57,11 +172,14 @@
     </nav>
 </header>
 	
-<div class="toggle-btn" id="openBtn" onclick="toggleForm(true)">+</div>
+<div class="toggle-btn" id="openBtn" onclick="toggleForm(true)">
+    <span>➕ Додати точку допомоги</span>
+</div>
 
 <div class="form-container" id="formPanel">
     <span class="close-btn" onclick="toggleForm(false)">×</span>
     <h3>Додати об'єкт</h3>
+	<h5><i>Знаєте місце допомоги? Поділіться!</i><h5>
     
     <select id="catId">
         <option value="1">🛏️ Нічліг</option>
@@ -82,6 +200,57 @@
 
     <button id="submitBtn" onclick="sendData()">Надіслати на модерацію</button>
 </div>
+
+<div id="welcomeModal" class="welcome-overlay">
+    <div class="welcome-content">
+        <h2>Вітаємо! 🤝</h2>
+        <p><b>Знаєте, де допомагають?</b><br>Додайте це місце на карту, щоб врятувати чиєсь життя.</p>
+        <button class="welcome-btn" onclick="closeWelcome()">Зрозумів, дякую!</button>
+    </div>
+</div>
+
+<script>
+function closeWelcome() {
+    document.getElementById('welcomeModal').style.display = 'none';
+    localStorage.setItem('welcomeShown', 'true');
+}
+
+window.onload = function() {
+    if (!localStorage.getItem('welcomeShown')) {
+        document.getElementById('welcomeModal').style.display = 'flex';
+    } else {
+        document.getElementById('welcomeModal').style.display = 'none';
+    }
+};
+</script>
+
+<div class="share-btn" id="shareBtn" onclick="shareSite()">
+    <span class="share-icon">🔗</span>
+    <span>Поділитися</span>
+</div>
+
+<script>
+async function shareSite() {
+    const shareData = {
+        title: document.title,
+        text: 'Знайдіть допомогу або допоможіть іншим на карті пунктів допомоги "Промінь Надії"',
+        url: window.location.href
+    };
+
+    try {
+        // Перевіряємо, чи підтримує браузер Web Share API (мобільні та сучасні ПК)
+        if (navigator.share) {
+            await navigator.share(shareData);
+        } else {
+            // Якщо не підтримує (напр. старі браузери), просто копіюємо посилання
+            await navigator.clipboard.writeText(window.location.href);
+            alert("Посилання скопійовано у буфер обміну!");
+        }
+    } catch (err) {
+        console.log("Користувач скасував поширення або виникла помилка");
+    }
+}
+</script>
 
 <div id="map"></div>
 
@@ -137,7 +306,7 @@
                         <div id="rev-list-${loc.id}" style="max-height:80px; overflow-y:auto; margin-bottom:8px;"></div>
                         <textarea id="rev-input-${loc.id}" placeholder="Ваш відгук..." style="width:100%; font-size:0.8rem; margin-bottom:4px;"></textarea>
                         <div id="ts-review-${loc.id}" style="min-height:65px"></div>
-                        <button onclick="sendReview(${loc.id})" style="width:100%; padding:5px; background:#333; color:white; border:none; border-radius:4px; cursor:pointer;">Залишити відгук</button>
+                        <button onclick="sendReview(${loc.id})" style="width:100%; padding:5px; background:#333; color:white; border:none; border-radius:4px; cursor:pointer;">Залишити коментар / Повідомити про помилку / Підтвердити актуальність"</button>
                     </div>
                 `);
                 
@@ -199,7 +368,7 @@
                     }
                 })
             });
-            if (res.ok) { alert("Надіслано!"); location.reload(); }
+            if (res.ok) { alert("Дякуємо! Ваш внесок допоможе людям знайти необхідне. Після модерації точка з'явиться на карті."); location.reload(); }
             else { 
                 const err = await res.json();
                 alert("Помилка: " + (err.error || "403")); 
@@ -220,7 +389,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ locId, text, token })
             });
-            if (res.ok) { alert("Відгук надіслано!"); map.closePopup(); }
+            if (res.ok) { alert("Дякуємо! Ваш внесок допоможе людям отримати необхідну інформацію. Після модерації коментар з'явиться на карті."); map.closePopup(); }
         } catch (e) { alert("Помилка мережі"); }
     }
 
