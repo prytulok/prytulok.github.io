@@ -253,7 +253,6 @@ async function shareSite() {
 
 function copyFallback(text, btn, originalText) {
     navigator.clipboard.writeText(text).then(() => {
-        // Візуальний фідбек на кнопці
         btn.style.background = '#d4edda';
         btn.innerHTML = '<span class="share-icon">✅</span> <span>Скопійовано!</span>';
         
