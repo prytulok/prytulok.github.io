@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=1024, initial-scale=0.8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Інтерактивна карта пунктів допомоги. Безкоштовний нічліг, їжа, ліки, душ (гігієна), одяг (речі) в Україні | Центр допомоги безхатнім та малозабезпеченим „Промінь Надії”</title>
     <meta name="description" content="Інтерактивна карта пунктів допомоги для безхатніх та малозабезпечених в Україні: безкоштовний нічліг, гаряча їжа, ліки та гігієна. Знайдіть допомогу поруч або додайте нову точку.">
     <meta name="keywords" content="допомога поруч, нічліг Україна, безкоштовна їжа, гуманітарна допомога карта, волонтерська допомога">
@@ -267,6 +267,12 @@ function copyFallback(text, btn, originalText) {
 
 <div id="map"></div>
 
+<script>
+if (window.innerWidth < 768) {
+    const viewport = document.querySelector("meta[name=viewport]");
+    viewport.setAttribute('content', 'width=800, initial-scale=0.5, maximum-scale=1.0');
+}
+</script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     const API_URL = 'https://shelter-api.basyliydelcreatore-01.workers.dev';
