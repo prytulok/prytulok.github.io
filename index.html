@@ -156,6 +156,18 @@
 			margin-right: 8px;
 			font-size: 16px;
 		}
+		.leaflet-popup {
+			z-index: 1005 !important; /* Ставимо вище за маркери (600) та стандартні попапи (1000) */
+		}
+
+		.leaflet-popup-content-wrapper {
+			box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+			border-radius: 8px;
+		}
+
+		.leaflet-popup-tip {
+			z-index: 1005;
+		}
     </style>
 </head>
 <body>
