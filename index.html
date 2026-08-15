@@ -32,7 +32,7 @@
 			position: absolute;
 			top: 20px;
 			right: 20px;
-			z-index: 1001;
+			z-index: 4;
 			width: auto;
 			padding: 0 20px;
 			height: 50px;
@@ -324,13 +324,12 @@ function copyFallback(text, btn, originalText) {
 
                 const marker = L.marker([loc.lat, loc.lng], { icon }).addTo(map);
                 
-                // Формування деталей об'єкта
                 const hoursHtml = loc.working_hours ? `<div>🕒 ${loc.working_hours}</div>` : '';
                 const phoneHtml = loc.phone ? `<div>📞 ${loc.phone}</div>` : '';
                 const commentHtml = loc.comment ? `<div style="margin-top:5px; color:#555; font-size:0.85rem;"><i>${loc.comment}</i></div>` : '';
 
                 marker.bindPopup(`
-                    <div style="width:230px">
+                    <div style="width:230px; z-index: 5;">
                         <b>${loc.name}</b><br>
                         <small>📍 ${loc.address}</small>
                         <div style="font-size:0.85rem; margin-top:5px; border-top:1px solid #eee; padding-top:5px;">
