@@ -179,7 +179,7 @@
 <div class="form-container" id="formPanel">
     <span class="close-btn" onclick="toggleForm(false)">×</span>
     <h3>Додати об'єкт</h3>
-	<h5><i>Знаєте місце допомоги? Поділіться!</i><h5>
+	<h5><i>Знаєте місце допомоги? Поділіться!</i></h5>
     
     <select id="catId">
         <option value="1">🛏️ Нічліг</option>
@@ -215,13 +215,12 @@ function closeWelcome() {
     localStorage.setItem('welcomeShown', 'true');
 }
 
-window.onload = function() {
+document.addEventListener('DOMContentLoaded', () => {
     if (!localStorage.getItem('welcomeShown')) {
         document.getElementById('welcomeModal').style.display = 'flex';
     } else {
         document.getElementById('welcomeModal').style.display = 'none';
     }
-};
 </script>
 
 <div class="share-btn" id="shareBtn" onclick="shareSite()">
@@ -327,6 +326,7 @@ function copyFallback(text, btn, originalText) {
                 marker.on('popupopen', async () => {
                     const container = document.getElementById(`rev-list-${loc.id}`);
                     const tsDiv = document.getElementById(`ts-review-${loc.id}`);
+					tsDiv.innerHTML = '';
                     container.innerHTML = "Завантаження...";
                     
                     try {
