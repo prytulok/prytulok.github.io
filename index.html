@@ -32,7 +32,7 @@
 			position: absolute;
 			top: 20px;
 			right: 20px;
-			z-index: 1020;
+			z-index: 1001;
 			width: auto;
 			padding: 0 20px;
 			height: 50px;
@@ -129,7 +129,7 @@
 			position: absolute;
 			bottom: 20px;
 			right: 20px;
-			z-index: 1010;
+			z-index: 3;
 			width: auto;
 			padding: 0 15px;
 			height: 40px;
@@ -155,18 +155,6 @@
 		.share-icon {
 			margin-right: 8px;
 			font-size: 16px;
-		}
-		.leaflet-popup {
-			z-index: 1030 !important;
-		}
-
-		.leaflet-popup-content-wrapper {
-			box-shadow: 0 3px 14px rgba(0,0,0,0.4);
-			border-radius: 8px;
-		}
-
-		.leaflet-popup-tip {
-			z-index: 1030;
 		}
     </style>
 </head>
@@ -336,12 +324,20 @@ function copyFallback(text, btn, originalText) {
 
                 const marker = L.marker([loc.lat, loc.lng], { icon }).addTo(map);
                 
+				marker.on('click', function(e) {
+					const latLng = e.target.getLatLng();
+					const targetPoint = map.project(latLng, map.getZoom()).subtract([0, 150]);
+					const targetLatLng = map.unproject(targetPoint, map.getZoom());
+					
+					map.panTo(targetLatLng, { animate: true });
+				});
+
                 const hoursHtml = loc.working_hours ? `<div>🕒 ${loc.working_hours}</div>` : '';
                 const phoneHtml = loc.phone ? `<div>📞 ${loc.phone}</div>` : '';
                 const commentHtml = loc.comment ? `<div style="margin-top:5px; color:#555; font-size:0.85rem;"><i>${loc.comment}</i></div>` : '';
 
                 marker.bindPopup(`
-                    <div style="width:230px; position: relative;">
+                    <div style="width:230px">
                         <b>${loc.name}</b><br>
                         <small>📍 ${loc.address}</small>
                         <div style="font-size:0.85rem; margin-top:5px; border-top:1px solid #eee; padding-top:5px;">
@@ -355,7 +351,11 @@ function copyFallback(text, btn, originalText) {
                         <div id="ts-review-${loc.id}" style="min-height:65px"></div>
                         <button onclick="sendReview(${loc.id})" style="width:100%; padding:5px; background:#333; color:white; border:none; border-radius:4px; cursor:pointer;">Залишити коментар / Повідомити про помилку / Підтвердити актуальність"</button>
                     </div>
-                `);
+                `, {
+					autoPan: true,
+					autoPanPadding: L.point(50, 50), // Відступи: 50px зверху/знизу та з боків
+					keepInView: true
+				);
                 
                 marker.on('popupopen', async () => {
                     const container = document.getElementById(`rev-list-${loc.id}`);
