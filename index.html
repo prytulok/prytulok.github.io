@@ -295,6 +295,10 @@ function copyFallback(text, btn, originalText) {
     const API_URL = 'https://shelter-api.basyliydelcreatore-01.workers.dev';
     const SITE_KEY = '0x4AAAAAAENAIXj5DrpBRyQV';
     const map = L.map('map').setView([48.3794, 31.1656], 5.5);
+	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | <a href="https://leafletjs.com">Leaflet</a>'
+    }).addTo(map);
     let selectedMarker = null;
     window.currentReviewToken = null;
 
