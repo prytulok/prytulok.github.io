@@ -351,7 +351,7 @@ function copyFallback(text, btn, originalText) {
                         <div id="rev-list-${loc.id}" style="max-height:80px; overflow-y:auto; margin-bottom:8px;"></div>
                         <textarea id="rev-input-${loc.id}" placeholder="Ваш відгук..." style="width:100%; font-size:0.8rem; margin-bottom:4px;"></textarea>
                         <div id="ts-review-${loc.id}" style="min-height:65px"></div>
-                        <button onclick="sendReview(${loc.id})" style="width:100%; padding:5px; background:#333; color:white; border:none; border-radius:4px; cursor:pointer;">Залишити коментар / Повідомити про помилку / Підтвердити актуальність"</button>
+                        <button onclick="sendReview(${loc.id})" style="width:100%; padding:5px; background:#333; color:white; border:none; border-radius:4px; cursor:pointer;">Залишити коментар / Повідомити про помилку / Підтвердити актуальність</button>
                     </div>
                 `, {
 					autoPan: true,
@@ -418,7 +418,7 @@ function copyFallback(text, btn, originalText) {
                     }
                 })
             });
-            if (res.ok) { alert("Дякуємо! Ваш внесок допоможе людям знайти необхідне. Після модерації точка з'явиться на карті."); if (selectedMarker) map.removeLayer(selectedMarker); selectedMarker = null; window.pos = null; toggleForm(false); turnstile.reset('#main-ts'); }
+            if (res.ok) { alert("Дякуємо! Ваш внесок допоможе людям знайти необхідне. Після модерації точка з'явиться на карті."); if (selectedMarker) map.removeLayer(selectedMarker); selectedMarker = null; window.pos = null; document.getElementById('coords').value = ''; toggleForm(false); turnstile.reset('#main-ts'); }
             else { 
                 const err = await res.json();
                 alert("Помилка: " + (err.error || "403")); 
