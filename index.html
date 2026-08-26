@@ -418,19 +418,21 @@ function copyFallback(text, btn, originalText) {
                     }
                 })
             });
-            if (res.ok) { alert("Дякуємо! Ваш внесок допоможе людям знайти необхідне. Після модерації точка з'явиться на карті."); location.reload(); }
+            if (res.ok) { alert("Дякуємо! Ваш внесок допоможе людям знайти необхідне. Після модерації точка з'явиться на карті."); if (selectedMarker) map.removeLayer(selectedMarker); selectedMarker = null; window.pos = null; toggleForm(false); turnstile.reset('#main-ts'); }
             else { 
                 const err = await res.json();
                 alert("Помилка: " + (err.error || "403")); 
                 turnstile.reset('#main-ts'); 
             }
-        } catch (e) { alert("Помилка мережі"); }
+        } catch (e) { alert("Помилка мережі. Спробуйте ще раз."); turnstile.reset('#main-ts'); }
         finally { btn.disabled = false; }
     }
 
     async function sendReview(locId) {
+	    const inputEl = document.getElementById(`rev-input-${locId}`);
         const text = document.getElementById(`rev-input-${locId}`).value;
         const token = window.currentReviewToken;
+		const tsDiv = document.getElementById(`ts-review-${locId}`);
         if (!text || !token) return alert("Напишіть текст та пройдіть капчу!");
 
         try {
@@ -439,8 +441,14 @@ function copyFallback(text, btn, originalText) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ locId, text, token })
             });
-            if (res.ok) { alert("Дякуємо! Ваш внесок допоможе людям отримати необхідну інформацію. Після модерації коментар з'явиться на карті."); map.closePopup(); }
-        } catch (e) { alert("Помилка мережі"); }
+            if (res.ok) { alert("Дякуємо! Ваш внесок допоможе людям отримати необхідну інформацію. Після модерації коментар з'явиться на карті.");
+			inputEl.value = '';
+            window.currentReviewToken = null;
+            if (tsDiv) {
+                turnstile.reset(tsDiv);
+            }
+			map.closePopup(); } else { alert("Помилка відправлення"); if (tsDiv) turnstile.reset(tsDiv); }
+        } catch (e) { alert("Помилка мережі"); if (tsDiv) turnstile.reset(tsDiv); }
     }
 
     loadLocations();
