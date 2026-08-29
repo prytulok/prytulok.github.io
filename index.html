@@ -303,24 +303,25 @@ function copyFallback(text, btn, originalText) {
     window.currentReviewToken = null;
 
     const catIcons = { 1: '🏠', 2: '🍲', 3: '💊', 4: '🚿', 5: '👕' };
-
-	function resetZoom() {
-		const viewport = document.querySelector('meta[name="viewport"]');
-		if (viewport) {
-			viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
-		}
-	}
 	
-	function forceResetZoom() {
+	function forceInitialZoom() {
 		const viewport = document.querySelector('meta[name="viewport"]');
+		
 		if (viewport) {
-			viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0');
+			const originalContent = viewport.getAttribute('content');
+			const forceResetContent = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0';
 			
+			viewport.setAttribute('content', forceResetContent);
 			setTimeout(() => {
 				viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
 			}, 300);
 		}
-		window.scrollTo(0, 0);
+
+		window.scrollTo({
+			top: 0,
+			left: 0,
+			behavior: 'smooth'
+		});
 	}
 
 	function toggleForm(show) {
@@ -333,7 +334,7 @@ function copyFallback(text, btn, originalText) {
 			panel.style.display = 'none';
 			btn.style.display = 'flex';
 			tsContainer.innerHTML = '';
-			forceResetZoom();
+			forceInitialZoom();
 		} else {
 			panel.style.display = 'block';
 			btn.style.display = 'none';
@@ -467,7 +468,7 @@ function copyFallback(text, btn, originalText) {
                 turnstile.reset('#main-ts'); 
             }
         } catch (e) { alert("Помилка мережі. Спробуйте ще раз."); turnstile.reset('#main-ts'); }
-        finally { btn.disabled = false; forceResetZoom();}
+        finally { btn.disabled = false; forceInitialZoom();}
     }
 
     async function sendReview(locId) {
