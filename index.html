@@ -312,6 +312,11 @@ function copyFallback(text, btn, originalText) {
 	}
 
     function toggleForm(show) {
+	    if (!show) {
+            if (document.activeElement) {
+                document.activeElement.blur();
+            }
+        }
         document.getElementById('formPanel').style.display = show ? 'block' : 'none';
         document.getElementById('openBtn').style.display = show ? 'none' : 'flex';
         if (show) {
