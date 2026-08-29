@@ -335,12 +335,19 @@ function copyFallback(text, btn, originalText) {
 			panel.style.display = 'none';
 			btn.style.display = 'flex';
 			tsContainer.innerHTML = '';
+			if (mainTurnstileId) {
+				turnstile.remove(mainTurnstileId);
+				mainTurnstileId = null;
+			}
 			forceInitialZoom();
 		} else {
 			panel.style.display = 'block';
 			btn.style.display = 'none';
 			
 			setTimeout(() => {
+				if (mainTurnstileId) {
+					turnstile.remove(mainTurnstileId);
+				}
 				tsContainer.innerHTML = '';
 				mainTurnstileId = turnstile.render('#main-ts', {
 					sitekey: SITE_KEY,
@@ -466,7 +473,6 @@ function copyFallback(text, btn, originalText) {
 				selectedMarker = null; window.pos = null; 
 				document.getElementById('coords').value = ''; 
 				toggleForm(false); 
-				turnstile.reset(); 
 			} else { 
 				const err = await res.json().catch(() => ({}));
 				alert("Помилка: " + (err.error || res.status)); 
