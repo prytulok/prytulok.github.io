@@ -304,10 +304,21 @@ function copyFallback(text, btn, originalText) {
 
     const catIcons = { 1: '🛏️', 2: '🍲', 3: '💊', 4: '🚿', 5: '👕' };
 
+	function resetZoom() {
+		const viewport = document.querySelector('meta[name="viewport"]');
+		if (viewport) {
+			viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
+		}
+	}
+
     function toggleForm(show) {
         document.getElementById('formPanel').style.display = show ? 'block' : 'none';
         document.getElementById('openBtn').style.display = show ? 'none' : 'flex';
-        if(show) turnstile.reset('#main-ts');
+        if (show) {
+		    turnstile.reset('#main-ts');
+	    } else {
+            resetZoom();
+		}
     }
 
     async function loadLocations() {
