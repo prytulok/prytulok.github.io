@@ -468,7 +468,7 @@ function copyFallback(text, btn, originalText) {
                 turnstile.reset('#main-ts'); 
             }
         } catch (e) { alert("Помилка мережі. Спробуйте ще раз."); turnstile.reset('#main-ts'); }
-        finally { btn.disabled = false; forceInitialZoom();}
+        finally { btn.disabled = false; }
     }
 
     async function sendReview(locId) {
