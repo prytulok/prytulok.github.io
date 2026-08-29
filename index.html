@@ -300,6 +300,7 @@ function copyFallback(text, btn, originalText) {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | <a href="https://leafletjs.com">Leaflet</a>'
     }).addTo(map);
     let selectedMarker = null;
+	let mainTurnstileId = null;
     window.currentReviewToken = null;
 
     const catIcons = { 1: '🏠', 2: '🍲', 3: '💊', 4: '🚿', 5: '👕' };
@@ -341,12 +342,10 @@ function copyFallback(text, btn, originalText) {
 			
 			setTimeout(() => {
 				tsContainer.innerHTML = '';
-				turnstile.render('#main-ts', {
+				mainTurnstileId = turnstile.render('#main-ts', {
 					sitekey: SITE_KEY,
-					callback: function(token) {
-						console.log("Token generated");
-					},
-				});
+					callback: function(token) { console.log("Token generated"); },
+                });
 			}, 100);
 		}
 	}
@@ -437,7 +436,7 @@ function copyFallback(text, btn, originalText) {
     });
 
 	async function sendData() {
-		const token = turnstile.getResponse(); 
+		const token = turnstile.getResponse(mainTurnstileId); 
 		if (!window.pos || !token) return alert("Оберіть точку та пройдіть перевірку!");
 
 		const btn = document.getElementById('submitBtn');
@@ -471,12 +470,12 @@ function copyFallback(text, btn, originalText) {
 			} else { 
 				const err = await res.json().catch(() => ({}));
 				alert("Помилка: " + (err.error || res.status)); 
-				turnstile.reset(); 
+				if (mainTurnstileId) turnstile.reset(mainTurnstileId);
 			}
 		} catch (e) { 
 			console.error(e);
 			alert("Помилка мережі. Перевірте консоль (F12)."); 
-			turnstile.reset(); 
+			if (mainTurnstileId) turnstile.reset(mainTurnstileId);
 		}
 		finally { btn.disabled = false; }
 	}
