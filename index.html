@@ -29,14 +29,13 @@
         body { margin: 0; font-family: sans-serif; background: #f4f4f9; }
         #map { height: 100vh; width: 100%; z-index: 1; }
         .toggle-btn {
-			position: fixed;
+			position: absolute;
 			top: 20px;
 			right: 20px;
 			z-index: 1001;
 			width: auto;
 			padding: 0 20px;
 			height: 50px;
-			gap: 8px;
 			background: #28a745; /* Зелений колір асоціюється з дією та допомогою */
 			color: white;
 			border-radius: 25px;
@@ -49,13 +48,7 @@
 			font-weight: bold;
 			transition: transform 0.2s, background 0.2s;
 		}
-		.toggle-btn span:first-child {
-			font-size: 20px;
-			line-height: 0;
-			display: flex;
-			align-items: center;
-		}
-			.toggle-btn:hover {
+		.toggle-btn:hover {
 			background: #218838;
 			transform: scale(1.05);
 		}
@@ -133,7 +126,7 @@
 			background: #218838;
 		}
 		.share-btn {
-			position: fixed;
+			position: absolute;
 			bottom: 20px;
 			right: 20px;
 			z-index: 3;
@@ -179,12 +172,8 @@
     </nav>
 </header>
 	
-<!--<div class="toggle-btn" id="openBtn" onclick="toggleForm(true)">
-    <span>➕ Додати точку допомоги</span>
-</div>-->
 <div class="toggle-btn" id="openBtn" onclick="toggleForm(true)">
-    <span>➕</span>
-    <span>Додати точку допомоги</span>
+    <span>➕ Додати точку допомоги</span>
 </div>
 
 <div class="form-container" id="formPanel">
