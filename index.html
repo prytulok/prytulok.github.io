@@ -310,6 +310,18 @@ function copyFallback(text, btn, originalText) {
 			viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
 		}
 	}
+	
+	function forceResetZoom() {
+		const viewport = document.querySelector('meta[name="viewport"]');
+		if (viewport) {
+			viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0');
+			
+			setTimeout(() => {
+				viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
+			}, 300);
+		}
+		window.scrollTo(0, 0);
+	}
 
     function toggleForm(show) {
 	    if (!show) {
@@ -441,7 +453,7 @@ function copyFallback(text, btn, originalText) {
                 turnstile.reset('#main-ts'); 
             }
         } catch (e) { alert("Помилка мережі. Спробуйте ще раз."); turnstile.reset('#main-ts'); }
-        finally { btn.disabled = false; }
+        finally { btn.disabled = false; forceResetZoom();}
     }
 
     async function sendReview(locId) {
