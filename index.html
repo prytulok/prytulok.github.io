@@ -27,22 +27,6 @@
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
     <style>
         body { margin: 0; font-family: sans-serif; background: #f4f4f9; }
-		html, body {
-			/* Забороняємо сторінці ставати ширшою за екран */
-			max-width: 100vw;
-			overflow-x: hidden; 
-			
-			/* Дозволяємо браузеру розуміти, де межі для scrollIntoView */
-			scroll-padding-top: 20px;
-			scroll-padding-right: 20px;
-		}
-
-		.toggle-btn, .form-container {
-			/* Використання fixed гарантує, що елемент ігнорує скрол карти */
-			position: fixed;
-			right: 20px;
-			top: 20px;
-		}
         #map { height: 100vh; width: 100%; z-index: 1; }
         .toggle-btn {
 			position: absolute;
@@ -302,34 +286,6 @@ function copyFallback(text, btn, originalText) {
         console.error("Не вдалося скопіювати", err);
     });
 }
-</script>
-
-<script>
-let resizeTimer;
-
-window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-        const form = document.getElementById('formPanel');
-        const openBtn = document.getElementById('openBtn');
-
-        // Визначаємо, який елемент зараз активний (видимий)
-        const activeElement = (form.style.display === 'block') ? form : openBtn;
-
-        if (activeElement) {
-            // scrollIntoView змушує браузер показати цей елемент
-            activeElement.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start',  // Притиснути до верху
-                inline: 'end'    // Притиснути до правого краю
-            });
-        }
-
-        // Оновлюємо карту, щоб вона заповнила новий простір екрана
-        map.invalidateSize();
-    }, 200);
-});
-
 </script>
 
 <div id="map"></div>
