@@ -292,15 +292,28 @@ function copyFallback(text, btn, originalText) {
 let resizeTimer;
 
 window.addEventListener('resize', () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
-            window.scrollTo({
-                top: 0,
-                left: document.body.scrollWidth,
-                behavior: 'smooth'
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+        const form = document.getElementById('formPanel');
+        const openBtn = document.getElementById('openBtn');
+
+        // Визначаємо, який елемент зараз активний (видимий)
+        const activeElement = (form.style.display === 'block') ? form : openBtn;
+
+        if (activeElement) {
+            // scrollIntoView змушує браузер показати цей елемент
+            activeElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',  // Притиснути до верху
+                inline: 'end'    // Притиснути до правого краю
             });
-        }, 100);
+        }
+
+        // Оновлюємо карту, щоб вона заповнила новий простір екрана
+        map.invalidateSize();
+    }, 200);
 });
+
 </script>
 
 <div id="map"></div>
