@@ -26,19 +26,6 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
     <style>
-		html {
-			scroll-snap-type: both mandatory;
-			scroll-behavior: smooth;
-		}
-		body::before {
-			content: "";
-			position: absolute;
-			top: 0;
-			left: 0;
-			width: 1px;
-			height: 1px;
-			scroll-snap-align: start;
-		}
         body { margin: 0; font-family: sans-serif; background: #f4f4f9; }
         #map { height: 100vh; width: 100%; z-index: 1; }
         .toggle-btn {
@@ -299,6 +286,21 @@ function copyFallback(text, btn, originalText) {
         console.error("Не вдалося скопіювати", err);
     });
 }
+</script>
+
+<script>
+let resizeTimer;
+
+window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            window.scrollTo({
+                top: 0,
+                left: document.body.scrollWidth,
+                behavior: 'smooth'
+            });
+        }, 100);
+});
 </script>
 
 <div id="map"></div>
