@@ -27,6 +27,22 @@
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
     <style>
         body { margin: 0; font-family: sans-serif; background: #f4f4f9; }
+		html, body {
+			/* Забороняємо сторінці ставати ширшою за екран */
+			max-width: 100vw;
+			overflow-x: hidden; 
+			
+			/* Дозволяємо браузеру розуміти, де межі для scrollIntoView */
+			scroll-padding-top: 20px;
+			scroll-padding-right: 20px;
+		}
+
+		.toggle-btn, .form-container {
+			/* Використання fixed гарантує, що елемент ігнорує скрол карти */
+			position: fixed;
+			right: 20px;
+			top: 20px;
+		}
         #map { height: 100vh; width: 100%; z-index: 1; }
         .toggle-btn {
 			position: absolute;
