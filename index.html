@@ -290,13 +290,17 @@ function copyFallback(text, btn, originalText) {
 
 <script>
 window.addEventListener('resize', () => {
-    requestAnimationFrame(() => {
+    setTimeout(() => {
+        const scrollTarget = document.documentElement || document.body;
+        const maxScroll = scrollTarget.scrollWidth;
+
         window.scrollTo({
-            left: document.body.scrollWidth,
+            left: maxScroll,
             top: 0,
-            behavior: 'instant'
+            behavior: 'auto'
         });
-    });
+        window.scroll(maxScroll, 0);
+    }, 50);
 });
 </script>
 
