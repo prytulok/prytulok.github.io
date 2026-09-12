@@ -176,6 +176,8 @@
     <span>➕ Додати точку допомоги</span>
 </div>
 
+<input type="text" id="zoom-resetter" style="width: 1px; height: 1px; font-size: 20px; position: absolute; opacity: 0; pointer-events: none;" />
+
 <div class="form-container" id="formPanel">
     <span class="close-btn" onclick="toggleForm(false)">×</span>
     <h3>Додати об'єкт</h3>
@@ -283,7 +285,19 @@ function copyFallback(text, btn, originalText) {
     });
 }
 </script>
-
+<script>
+function resetViewportZoom() {
+  const viewport = document.querySelector('meta[name="viewport"]');
+  
+  if (viewport) {
+    const originalContent = viewport.getAttribute('content');
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+        setTimeout(() => {
+          viewport.setAttribute('content', originalContent);
+        }, 100);
+  }
+}
+</script>
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -336,6 +350,13 @@ function copyFallback(text, btn, originalText) {
 				mainTurnstileId = null;
 			}
 			forceInitialZoom();
+            resetViewportZoom();
+			const resetter = document.getElementById('zoom-resetter');
+			resetter.focus();
+			setTimeout(() => {
+				resetter.blur();
+			}, 50);
+
 		} else {
 			panel.style.display = 'block';
 			btn.style.display = 'none';
