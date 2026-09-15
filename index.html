@@ -70,7 +70,7 @@
         button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
         button:disabled { background: #ccc; cursor: not-allowed; }
         .coords-val { background: #eee; font-family: monospace; font-size: 0.75rem; color: #555; }
-        .close-btn { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 22px; color: #999; font-weight: bold; }
+        .close-btn { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 22px; color: #999; font-weight: bold; padding: 10px; margin: -10px 0 0 -10px;}
         .rev-item { border-bottom: 1px solid #eee; padding: 4px 0; font-size: 0.8rem; color: #444; }
         .cf-turnstile { margin-bottom: 8px; min-height: 65px; }
         .cat-icon { background: white; border: 2px solid #007bff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); font-size: 18px; }
@@ -156,6 +156,22 @@
 			margin-right: 8px;
 			font-size: 16px;
 		}
+		
+		.leaflet-container a.leaflet-popup-close-button {
+		    padding: 10px;
+            top: -10px !important;
+            right: -10px !important;
+		}
+		
+		.leaflet-popup-content {
+            overflow: hidden;
+        }
+		
+		.leaflet-popup-content div div {
+		    max-height: 200px;
+            overflow-y: scroll;
+			scrollbar-width: thin;
+	    }
     </style>
 </head>
 <body>
