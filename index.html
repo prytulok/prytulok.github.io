@@ -167,11 +167,10 @@
             overflow: hidden;
         }
 		
-		.leaflet-popup-content div div {
-		    max-height: 200px;
-            overflow-y: scroll;
-			scrollbar-width: thin;
-	    }
+		.leaflet-popup-content div[style*="font-size:0.85rem"] {
+			max-height: 200px;
+			overflow-y: auto;
+   			scrollbar-width: thin;
     </style>
 </head>
 <body>
