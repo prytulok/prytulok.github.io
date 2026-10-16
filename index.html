@@ -217,6 +217,28 @@
 			transition: background 0.2s;
 		}
 		.ts-placeholder:hover { background: #e8e8e8; }
+		
+		.toggle-btn {
+    position: absolute; /* вже є */
+    /* animation: pulse 2s infinite;  ← ВИДАЛИТИ звідси */
+}
+
+.toggle-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 25px;
+    box-shadow: 0 0 0 10px rgba(40, 167, 69, 0.7);
+    opacity: 0;
+    pointer-events: none;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%       { opacity: 0.7; transform: scale(1); }
+    70%,100% { opacity: 0;   transform: scale(1.35); }
+}
+
     </style>
 </head>
 <body>
@@ -588,13 +610,6 @@ function resetViewportZoom() {
         document.getElementById('coords').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
         window.pos = { lat, lng };
     });
-	
-	map.on('moveend', () => {
-			document.querySelector('#map').style.display = 'none';
-			document.querySelector('#map').style.display = 'block';
-
-			console.log('moving...');
-	});
 
 	async function sendData() {
 		const token = turnstile.getResponse(mainTurnstileId); 
