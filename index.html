@@ -588,16 +588,9 @@ function resetViewportZoom() {
     });
 	
 	map.on('moveend', () => {
-		map.invalidateSize();
-		resetViewportZoom();
-
 		if (document.activeElement) document.activeElement.blur();
-		if (mainTurnstileId) mainTurnstileId = null;
-		forceInitialZoom();
-		resetViewportZoom();
-		const resetter = document.getElementById('zoom-resetter');
-		resetter.focus();
-		setTimeout(() => { resetter.blur(); }, 50);
+		const focusBtn = document.querySelector('.toggle-btn');
+		focusBtn.focus();
 	});
 
 	async function sendData() {
