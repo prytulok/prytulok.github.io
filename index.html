@@ -237,7 +237,9 @@
     <span>➕ Додати точку допомоги</span>
 </div>
 
-<input type="text" id="zoom-resetter" style="width: 1px; height: 1px; font-size: 20px; position: absolute; opacity: 0; pointer-events: none;" />
+<input type="text" id="zoom-resetter" style="width: 1px; height: 1px; font-size: 20px; position: absolute; opacity: 0;" />
+
+<div class="focusElement" style="display: block; width: 1px; height: 1px; position: absolute; top: 0; right: 0; opacity: 0; background: transparent; z-index: 1000;" />
 
 <div class="form-container" id="formPanel">
     <span class="close-btn" onclick="toggleForm(false)">×</span>
@@ -588,11 +590,8 @@ function resetViewportZoom() {
     });
 	
 	map.on('moveend', () => {
-			setTimeout(() => {
-				removeTsWidget('main-ts');   // ← заміняє старий блок
-				if (mainTurnstileId) mainTurnstileId = null;
-				renderTurnstileOnClick('main-ts', 'onMainToken');
-			}, 100);
+			document.querySelector('.focusElement').click();
+
 			console.log('moving...');
 	});
 
