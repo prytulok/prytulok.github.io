@@ -590,7 +590,8 @@ function resetViewportZoom() {
     });
 	
 	map.on('moveend', () => {
-			document.querySelector('.focusElement').click();
+			document.querySelector('#map').style.display = 'none';
+			document.querySelector('#map').style.display = 'block';
 
 			console.log('moving...');
 	});
