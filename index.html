@@ -588,15 +588,11 @@ function resetViewportZoom() {
     });
 	
 	map.on('moveend', () => {
-			if (document.activeElement) document.activeElement.blur();
-			removeTsWidget('main-ts');
-			if (mainTurnstileId) mainTurnstileId = null;
-
-			forceInitialZoom();
-			resetViewportZoom();
-			const resetter = document.getElementById('zoom-resetter');
-			resetter.focus();
-			setTimeout(() => { resetter.blur(); }, 50);
+			setTimeout(() => {
+				removeTsWidget('main-ts');   // ← заміняє старий блок
+				if (mainTurnstileId) mainTurnstileId = null;
+				renderTurnstileOnClick('main-ts', 'onMainToken');
+			}, 100);
 			console.log('moving...');
 	});
 
