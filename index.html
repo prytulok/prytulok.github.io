@@ -203,6 +203,21 @@
 			line-height: 1;
 			font-weight: bold;
 		}
+		
+		.ts-placeholder {
+			width: 100%;
+			padding: 12px;
+			background: #f0f0f0;
+			border: 1px dashed #aaa;
+			border-radius: 4px;
+			cursor: pointer;
+			font-size: 0.85rem;
+			color: #555;
+			text-align: center;
+			margin-bottom: 8px;
+			transition: background 0.2s;
+		}
+		.ts-placeholder:hover { background: #e8e8e8; }
     </style>
 </head>
 <body>
@@ -333,6 +348,71 @@ function copyFallback(text, btn, originalText) {
 }
 </script>
 <script>
+const tsWidgets = new Map();
+
+// Коректно прибираємо віджет перед очищенням контейнера
+function removeTsWidget(containerId) {
+    const widgetId = tsWidgets.get(containerId);
+    if (widgetId !== undefined) {
+        try { turnstile.remove(widgetId); } catch (e) {}
+        tsWidgets.delete(containerId);
+    }
+    const container = document.getElementById(containerId);
+    if (container) {
+        container.innerHTML = '';
+        container.dataset.tsRendered = '0';
+    }
+}
+
+// Показуємо кнопку-заглушку (без inline onclick!)
+function renderTurnstileOnClick(containerId, tokenHandlerName) {
+    const container = document.getElementById(containerId);
+    if (!container || container.dataset.tsRendered === '1') return;
+
+    container.innerHTML = '';
+    const placeholder = document.createElement('div');
+    placeholder.className = 'ts-placeholder';
+    placeholder.textContent = '🤖 Перевірити людину';
+    // навішуємо обробник напряму — надійніше за inline всередині Leaflet-попапа
+    placeholder.addEventListener('click', function(ev) {
+        ev.preventDefault();
+        ev.stopPropagation();   // ← клік не «втече» в мапу
+        activateTurnstile(containerId);
+    });
+    container.appendChild(placeholder);
+
+    container.dataset.tsRendered = '0';
+    container.dataset.handler = tokenHandlerName;
+}
+
+function activateTurnstile(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container || container.dataset.tsRendered === '1') return;
+    if (typeof turnstile === 'undefined') {
+        alert("Перевірка безпеки ще завантажується, спробуйте за секунду.");
+        return;
+    }
+
+    // якщо в цьому контейнері вже живе віджет — спочатку коректно знімаємо
+    removeTsWidget(containerId);
+
+    container.dataset.tsRendered = '1';
+    container.innerHTML = '';
+
+    const widgetId = turnstile.render(container, {
+        sitekey: SITE_KEY,
+        callback: function(token) {
+            const handler = window[container.dataset.handler];
+            if (typeof handler === 'function') handler(token);
+        }
+    });
+
+    tsWidgets.set(containerId, widgetId);
+
+    if (containerId === 'main-ts') mainTurnstileId = widgetId;
+}
+</script>
+<script>
 function resetViewportZoom() {
   const viewport = document.querySelector('meta[name="viewport"]');
   
@@ -359,6 +439,18 @@ function resetViewportZoom() {
     let selectedMarker = null;
 	let mainTurnstileId = null;
     window.currentReviewToken = null;
+	
+		// Колбек для головної форми
+	window.onMainToken = function(token) {
+		console.log("Main token ready");
+		// тут нічого більше не треба — sendData() бере токен через turnstile.getResponse(mainTurnstileId)
+	};
+
+	// Колбек для відгуків
+	window.onReviewToken = function(token) {
+		window.currentReviewToken = token;
+	};
+
 
     const catIcons = { 1: '🏠', 2: '🍲', 3: '💊', 4: '🚿', 5: '👕' };
 	
@@ -391,34 +483,27 @@ function resetViewportZoom() {
 			if (document.activeElement) document.activeElement.blur();
 			panel.style.display = 'none';
 			btn.style.display = 'flex';
-			tsContainer.innerHTML = '';
-			if (mainTurnstileId) {
-				turnstile.remove(mainTurnstileId);
-				mainTurnstileId = null;
-			}
+			removeTsWidget('main-ts');   // ← заміняє 3 старі рядки
+			if (mainTurnstileId) mainTurnstileId = null;
+
 			forceInitialZoom();
-            resetViewportZoom();
+			resetViewportZoom();
 			const resetter = document.getElementById('zoom-resetter');
 			resetter.focus();
-			setTimeout(() => {
-				resetter.blur();
-			}, 50);
+			setTimeout(() => { resetter.blur(); }, 50);
 
 		} else {
 			panel.style.display = 'block';
 			btn.style.display = 'none';
-			
+
 			setTimeout(() => {
-				if (mainTurnstileId) {
-					turnstile.remove(mainTurnstileId);
-				}
-				tsContainer.innerHTML = '';
-				mainTurnstileId = turnstile.render('#main-ts', {
-					sitekey: SITE_KEY,
-					callback: function(token) { console.log("Token generated"); },
-                });
+				removeTsWidget('main-ts');   // ← заміняє старий блок
+				if (mainTurnstileId) mainTurnstileId = null;
+				renderTurnstileOnClick('main-ts', 'onMainToken');
 			}, 100);
 		}
+
+
 	}
 
     async function loadLocations() {
@@ -464,35 +549,32 @@ function resetViewportZoom() {
                         <div id="ts-review-${loc.id}" style="min-height:65px"></div>
                         <button onclick="sendReview(${loc.id})" style="width:100%; padding:5px; background:#333; color:white; border:none; border-radius:4px; cursor:pointer;">Залишити коментар / Повідомити про помилку / Підтвердити актуальність</button>
                     </div>
-                `, {
-					autoPan: true,
-					autoPanPadding: L.point(50, 50),
-					keepInView: false
-				});
+					`, {
+						autoPan: true,
+						autoPanPadding: L.point(50, 50),
+						keepInView: false,
+						closeOnClick: false   // ← клік по мапі більше не закриває попап
+					});
                 
                 marker.on('popupopen', async () => {
-                    const container = document.getElementById(`rev-list-${loc.id}`);
-                    const tsDiv = document.getElementById(`ts-review-${loc.id}`);
-					tsDiv.innerHTML = '';
-                    container.innerHTML = "Завантаження...";
-                    
-                    try {
-                        const rRes = await fetch(`${API_URL}/api/reviews?locId=${loc.id}`);
-                        if (!rRes.ok) throw new Error();
-                        const reviews = await rRes.json();
-                        container.innerHTML = reviews.length ? reviews.map(r => `<div class="rev-item">• ${r.text}</div>`).join('') : 'Відгуків немає';
-                    } catch (e) {
-                        container.innerHTML = "Відгуки недоступні";
-                    }
-                    
-                    tsDiv.innerHTML = '';
-					setTimeout(() => {
-						turnstile.render(tsDiv, {
-							sitekey: SITE_KEY,
-							callback: function(token) { window.currentReviewToken = token; }
-						});
-                    }, 100);
-                });
+					const container = document.getElementById(`rev-list-${loc.id}`);
+					const tsDiv = document.getElementById(`ts-review-${loc.id}`);
+					removeTsWidget(`ts-review-${loc.id}`);      // ← коректне зняття віджета
+					window.currentReviewToken = null;
+					container.innerHTML = "Завантаження...";
+
+					try {
+						const rRes = await fetch(`${API_URL}/api/reviews?locId=${loc.id}`);
+						if (!rRes.ok) throw new Error();
+						const reviews = await rRes.json();
+						container.innerHTML = reviews.length ? reviews.map(r => `<div class="rev-item">• ${r.text}</div>`).join('') : 'Відгуків немає';
+					} catch (e) {
+						container.innerHTML = "Відгуки недоступні";
+					}
+
+					renderTurnstileOnClick(`ts-review-${loc.id}`, 'onReviewToken');
+				});
+
             });
         } catch (e) { console.error("Помилка завантаження даних"); }
     }
@@ -540,12 +622,16 @@ function resetViewportZoom() {
 			} else { 
 				const err = await res.json().catch(() => ({}));
 				alert("Помилка: " + (err.error || res.status)); 
-				if (mainTurnstileId) turnstile.reset(mainTurnstileId);
+				removeTsWidget('main-ts');
+				mainTurnstileId = null;
+				renderTurnstileOnClick('main-ts', 'onMainToken');
 			}
 		} catch (e) { 
 			console.error(e);
 			alert("Помилка мережі. Перевірте консоль (F12)."); 
-			if (mainTurnstileId) turnstile.reset(mainTurnstileId);
+			removeTsWidget('main-ts');
+			mainTurnstileId = null;
+			renderTurnstileOnClick('main-ts', 'onMainToken');
 		}
 		finally { btn.disabled = false; }
 	}
@@ -564,14 +650,29 @@ function resetViewportZoom() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ locId, text, token })
             });
-            if (res.ok) { alert("Дякуємо! Ваш внесок допоможе людям отримати необхідну інформацію. Після модерації коментар з'явиться на карті.");
-			inputEl.value = '';
-            window.currentReviewToken = null;
-            if (tsDiv) {
-                turnstile.reset(tsDiv);
-            }
-			map.closePopup(); } else { alert("Помилка відправлення"); if (tsDiv) turnstile.reset(tsDiv); }
-        } catch (e) { alert("Помилка мережі"); if (tsDiv) turnstile.reset(tsDiv); }
+            if (res.ok) {
+				alert("Дякуємо! Ваш внесок допоможе людям отримати необхідну інформацію. Після модерації коментар з'явиться на карті.");
+				inputEl.value = '';
+				window.currentReviewToken = null;
+				if (tsDiv) {
+					removeTsWidget(`ts-review-${locId}`);
+					renderTurnstileOnClick(`ts-review-${locId}`, 'onReviewToken');
+				}
+				map.closePopup();
+			} else {
+				alert("Помилка відправлення");
+				if (tsDiv) {
+					removeTsWidget(`ts-review-${locId}`);
+					renderTurnstileOnClick(`ts-review-${locId}`, 'onReviewToken');
+				}
+			}
+        } catch (e) {
+			alert("Помилка мережі");
+			if (tsDiv) {
+				removeTsWidget(`ts-review-${locId}`);
+				renderTurnstileOnClick(`ts-review-${locId}`, 'onReviewToken');
+			}
+		}
     }
 
     loadLocations();
