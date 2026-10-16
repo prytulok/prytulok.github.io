@@ -588,9 +588,16 @@ function resetViewportZoom() {
     });
 	
 	map.on('moveend', () => {
-		if (document.activeElement) document.activeElement.blur();
-		const focusBtn = document.querySelector('.toggle-btn');
-		focusBtn.focus();
+			if (document.activeElement) document.activeElement.blur();
+			removeTsWidget('main-ts');
+			if (mainTurnstileId) mainTurnstileId = null;
+
+			forceInitialZoom();
+			resetViewportZoom();
+			const resetter = document.getElementById('zoom-resetter');
+			resetter.focus();
+			setTimeout(() => { resetter.blur(); }, 50);
+			console.log('moving...');
 	});
 
 	async function sendData() {
