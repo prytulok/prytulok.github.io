@@ -553,14 +553,16 @@ function resetViewportZoom() {
 					`, {
 						autoPan: true,
 						autoPanPadding: L.point(50, 50),
-						keepInView: false,
-						closeOnClick: false   // ← клік по мапі більше не закриває попап
+						keepInView: false
 					});
                 
                 marker.on('popupopen', async () => {
 					const container = document.getElementById(`rev-list-${loc.id}`);
+					const content = marker.getPopup().getElement(); // DOM попапа
+					L.DomEvent.disableClickPropagation(content);
 					const tsDiv = document.getElementById(`ts-review-${loc.id}`);
-					removeTsWidget(`ts-review-${loc.id}`);      // ← коректне зняття віджета
+					if (tsDiv) L.DomEvent.disableClickPropagation(tsDiv);
+					removeTsWidget(`ts-review-${loc.id}`);
 					window.currentReviewToken = null;
 					container.innerHTML = "Завантаження...";
 
@@ -677,6 +679,6 @@ function resetViewportZoom() {
     }
 
     loadLocations();
-</script>
-</body>
-</html>
+	</script>
+	</body>
+	</html>
